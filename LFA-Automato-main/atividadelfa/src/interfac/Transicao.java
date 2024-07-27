@@ -1,4 +1,4 @@
-package interfac;
+package Interface;
 
 public interface Transicao {
     Estado getEstadoOrigem();
