@@ -1,8 +1,8 @@
-package interfac;
-
-import java.util.function.Consumer;
+package Interface;
 
 public interface AutomatoPilha {
-    boolean processarCadeia(String cadeia, Consumer<String> logger);
+    boolean processarCadeia(String cadeia, StringBuilder logger);
     void adicionarTransicao(Transicao transicao);
+    void adicionarEstado(Estado estado);
+    void adicionarEstadoFinal(Estado estado);
 }
