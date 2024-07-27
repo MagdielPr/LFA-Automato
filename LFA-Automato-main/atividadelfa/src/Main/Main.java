@@ -1,7 +1,7 @@
 package Main;
 
 import Metodos.*;
-import interfac.*;
+import Interface.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -43,7 +43,6 @@ public class Main {
     }
 
     private static void configurarAutomato(AutomatoPilha automato) {
-        // Transições para a linguagem (a^n) c (b^n) onde n > 0
         automato.adicionarTransicao(new TransicaoImpl(new EstadoImpl("q0"), 'a', 'Z', new EstadoImpl("q0"), new char[] {'A', 'Z'}));
         automato.adicionarTransicao(new TransicaoImpl(new EstadoImpl("q0"), 'a', 'A', new EstadoImpl("q0"), new char[] {'A', 'A'}));
 
@@ -56,7 +55,7 @@ public class Main {
     private static void criarInterfaceGrafica() {
         JFrame frame = new JFrame("Autômato de Pilha");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 600);
+        frame.setSize(800, 600);
         frame.setLayout(new BorderLayout());
 
         JPanel inputPanel = new JPanel();
@@ -81,24 +80,18 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 cadeia = textField.getText();
-                processarCadeia(cadeia);
+                StringBuilder log = new StringBuilder();
+                boolean aceita = automato.processarCadeia(cadeia, log);
+                logArea.setText(log.toString());
             }
         });
-        
-        JPanel configPainel = new JPanel();
-        configPainel.setLayout(new GridLayout(7, 2));
-        
-        JLabel configLabel = new JLabel("Estado de Origem:");
-        JTextField configField = new JTextField(5);
-        
-        JButton aconfigPainelButton = new JButton("Adicionar Transição");
 
-        configPainel.add(configLabel);
-        configPainel.add(configField);
-        
+        JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new GridLayout(3, 1));
 
         JPanel transitionPanel = new JPanel();
         transitionPanel.setLayout(new GridLayout(7, 2));
+        transitionPanel.setBorder(BorderFactory.createTitledBorder("Adicionar Transição"));
 
         JLabel origemLabel = new JLabel("Estado de Origem:");
         JTextField origemField = new JTextField(5);
@@ -127,35 +120,79 @@ public class Main {
         transitionPanel.add(destinoField);
         transitionPanel.add(novosSimbolosLabel);
         transitionPanel.add(novosSimbolosField);
-        transitionPanel.add(new JLabel()); // placeholder
+        transitionPanel.add(new JLabel()); // Empty space
         transitionPanel.add(adicionarTransicaoButton);
-
-        frame.add(transitionPanel, BorderLayout.SOUTH);
 
         adicionarTransicaoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String origem = origemField.getText();
+                Estado origem = new EstadoImpl(origemField.getText());
                 char entrada = entradaField.getText().charAt(0);
                 char pilha = pilhaField.getText().charAt(0);
-                String destino = destinoField.getText();
+                Estado destino = new EstadoImpl(destinoField.getText());
                 char[] novosSimbolos = novosSimbolosField.getText().toCharArray();
 
-                Transicao novaTransicao = new TransicaoImpl(new EstadoImpl(origem), entrada, pilha, new EstadoImpl(destino), novosSimbolos);
-                automato.adicionarTransicao(novaTransicao);
-                logArea.append("Transição adicionada: (" + origem + ", " + entrada + ", " + pilha + ") -> (" + destino + ", " + Arrays.toString(novosSimbolos) + ")\n");
+                Transicao transicao = new TransicaoImpl(origem, entrada, pilha, destino, novosSimbolos);
+                automato.adicionarTransicao(transicao);
+
+                logArea.append("Transição adicionada: (" + origem.getNome() + ", " + entrada + ", " + pilha + ") -> (" + destino.getNome() + ", " + Arrays.toString(novosSimbolos) + ")\n");
             }
         });
 
+        JPanel statePanel = new JPanel();
+        statePanel.setLayout(new GridLayout(3, 2));
+        statePanel.setBorder(BorderFactory.createTitledBorder("Adicionar Estado"));
+
+        JLabel estadoLabel = new JLabel("Nome do Estado:");
+        JTextField estadoField = new JTextField(10);
+
+        JButton adicionarEstadoButton = new JButton("Adicionar Estado");
+
+        statePanel.add(estadoLabel);
+        statePanel.add(estadoField);
+        statePanel.add(new JLabel()); // Empty space
+        statePanel.add(adicionarEstadoButton);
+
+        adicionarEstadoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Estado novoEstado = new EstadoImpl(estadoField.getText());
+                automato.adicionarEstado(novoEstado);
+
+                logArea.append("Estado adicionado: " + novoEstado.getNome() + "\n");
+            }
+        });
+
+        JPanel finalStatePanel = new JPanel();
+        finalStatePanel.setLayout(new GridLayout(3, 2));
+        finalStatePanel.setBorder(BorderFactory.createTitledBorder("Adicionar Estado Final"));
+
+        JLabel estadoFinalLabel = new JLabel("Nome do Estado Final:");
+        JTextField estadoFinalField = new JTextField(10);
+
+        JButton adicionarEstadoFinalButton = new JButton("Adicionar Estado Final");
+
+        finalStatePanel.add(estadoFinalLabel);
+        finalStatePanel.add(estadoFinalField);
+        finalStatePanel.add(new JLabel()); // Empty space
+        finalStatePanel.add(adicionarEstadoFinalButton);
+
+        adicionarEstadoFinalButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Estado estadoFinal = new EstadoImpl(estadoFinalField.getText());
+                automato.adicionarEstadoFinal(estadoFinal);
+
+                logArea.append("Estado final adicionado: " + estadoFinal.getNome() + "\n");
+            }
+        });
+
+        controlPanel.add(transitionPanel);
+        controlPanel.add(statePanel);
+        controlPanel.add(finalStatePanel);
+
+        frame.add(controlPanel, BorderLayout.EAST);
+
         frame.setVisible(true);
-    }
-
-    private static void processarCadeia(String cadeia) {
-        logArea.setText("");
-        automato.processarCadeia(cadeia, Main::adicionarLog);
-    }
-
-    public static void adicionarLog(String mensagem) {
-        logArea.append(mensagem + "\n");
     }
 }
