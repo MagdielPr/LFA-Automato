@@ -1,10 +1,11 @@
 package Metodos;
 
-import interfac.*;
+import Interface.Estado;
+import Interface.Transicao;
+import Interface.AutomatoPilha;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
-import java.util.function.Consumer;
 
 public class AutomatoPilhaImpl implements AutomatoPilha {
     private Set<Estado> estados;
@@ -29,13 +30,23 @@ public class AutomatoPilhaImpl implements AutomatoPilha {
     }
 
     @Override
-    public boolean processarCadeia(String cadeia, Consumer<String> logger) {
+    public void adicionarEstado(Estado estado) {
+        estados.add(estado);
+    }
+
+    @Override
+    public void adicionarEstadoFinal(Estado estado) {
+        estadosFinais.add(estado);
+    }
+
+    @Override
+    public boolean processarCadeia(String cadeia, StringBuilder logger) {
         Stack<Character> pilha = new Stack<>();
         pilha.push('Z');
         Estado estadoAtual = estadoInicial;
         int pos = 0;
 
-        logger.accept(gerarRepresentacao(estadoAtual, pilha));
+        logger.append(gerarRepresentacao(estadoAtual, pilha));
 
         while (pos <= cadeia.length()) {
             char simboloEntrada = pos < cadeia.length() ? cadeia.charAt(pos) : 'ε';
@@ -49,12 +60,14 @@ public class AutomatoPilhaImpl implements AutomatoPilha {
                     estadoAtual = transicao.getEstadoDestino();
                     pilha.pop();
                     for (int i = transicao.getSimbolosPilha().length - 1; i >= 0; i--) {
-                        pilha.push(transicao.getSimbolosPilha()[i]);
+                        if (transicao.getSimbolosPilha()[i] != 'ε') {
+                            pilha.push(transicao.getSimbolosPilha()[i]);
+                        }
                     }
 
-                    logger.accept(gerarRepresentacao(estadoAtual, pilha) + " - Transição: (" +
+                    logger.append(gerarRepresentacao(estadoAtual, pilha) + " - Transição: (" +
                             transicao.getEstadoOrigem().getNome() + ", " + simboloEntrada + ", " +
-                            transicao.getSimboloPilha() + ") -> (" + estadoAtual.getNome() + ")");
+                            transicao.getSimboloPilha() + ") -> (" + estadoAtual.getNome() + ")\n");
                     
                     transicaoEncontrada = true;
                     if (simboloEntrada != 'ε') pos++;
@@ -63,20 +76,23 @@ public class AutomatoPilhaImpl implements AutomatoPilha {
             }
 
             if (!transicaoEncontrada) {
-                logger.accept("Nenhuma transição encontrada para (" + estadoAtual.getNome() + ", " + simboloEntrada + ", " + pilha.peek() + ")");
-                break;
+                if (estadosFinais.contains(estadoAtual) && pilha.peek() == 'Z') {
+                    logger.append(gerarRepresentacao(estadoAtual, pilha) + " - Cadeia foi aceita\n");
+                    return true;
+                } else {
+                    logger.append("Nenhuma transição encontrada para (" + estadoAtual.getNome() + ", " + simboloEntrada + ", " + pilha.peek() + ")\n");
+                    break;
+                }
             }
         }
 
-        boolean aceita = estadosFinais.contains(estadoAtual) && pilha.peek() == 'Z' && cadeia.contains("a") && cadeia.contains("b");
-        if(aceita) {
-	        logger.accept(gerarRepresentacao(estadoAtual, pilha) + " - Cadeia foi aceita");
-	        return aceita;
-	    }
-        else {
-        	logger.accept(gerarRepresentacao(estadoAtual, pilha) + " - Cadeia não foi aceita");
-	        return aceita;
+        boolean aceita = estadosFinais.contains(estadoAtual) && pilha.peek() == 'Z';
+        if (aceita) {
+            logger.append(gerarRepresentacao(estadoAtual, pilha) + " - Cadeia foi aceita\n");
+        } else {
+            logger.append(gerarRepresentacao(estadoAtual, pilha) + " - Cadeia não foi aceita\n");
         }
+        return aceita;
     }
 
     private String gerarRepresentacao(Estado estadoAtual, Stack<Character> pilha) {
@@ -86,9 +102,13 @@ public class AutomatoPilhaImpl implements AutomatoPilha {
         sb.append("+------------------------+\n");
         sb.append("| Pilha:                 |\n");
         sb.append("+------------------------+\n");
-        for (Character c : pilha) {
-            sb.append("| ").append(c).append("                      |\n");
+        
+        Stack<Character> pilhaInvertida = new Stack<>();
+        pilhaInvertida.addAll(pilha);
+        while (!pilhaInvertida.isEmpty()) {
+            sb.append("| ").append(pilhaInvertida.pop()).append("                      |\n");
         }
+
         sb.append("+------------------------+\n");
         return sb.toString();
     }
