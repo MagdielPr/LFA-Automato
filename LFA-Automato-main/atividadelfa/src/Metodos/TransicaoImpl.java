@@ -1,6 +1,6 @@
 package Metodos;
 
-import interfac.*;
+import Interface.*;
 
 public class TransicaoImpl implements Transicao {
     private Estado estadoOrigem;
