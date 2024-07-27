@@ -1,6 +1,7 @@
 package Metodos;
+
 import java.util.Objects;
-import interfac.Estado;
+import Interface.Estado;
 
 public class EstadoImpl implements Estado {
     private final String nome;
